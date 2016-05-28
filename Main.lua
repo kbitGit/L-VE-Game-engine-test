@@ -96,11 +96,7 @@ function colldec (type1, dir1, type2, dir2, collA, collB) -- destroying two bodi
 	if dir1 == "" and dir2 =="" then -- when there is no direction, don't use it
 		for j, one in ipairs(objects[type1]) do -- opening our tables
 			for i, two in ipairs(objects[type2]) do
-				if one.isDone == 1 and two.isDone == 1 then -- only use the bodies if they are done and haven't been used yet
-					if(collB == (type2..i)) then
-						print(collB)
-						print(type2..i)
-					end
+				if one.isDone == 1 and two.isDone == 1 then -- only use the bodies if they are done and haven't been used yet				
 					if collA == (type1..j) and collB == (type2..i) or collA == (type2..i) and collB == (type1..j) then -- triggers when collision data matches object data
 						one.body:destroy()
 						one.isDone = 2
