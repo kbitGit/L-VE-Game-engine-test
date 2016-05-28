@@ -36,67 +36,115 @@ bananatree = 3 -- random testing variable
 ---JUMP EFFECT---
 square = meter -- player size
 -----------------
+local bulletsHandle = require "Bullet"
+local enemyHandle = require "Enemy"
 
-function shoot(bullets, dir) --used for deploying a bullet from the player in a specific direction
-	if _G["sniggle" .. dir] ==1 then    -- prevents autofire (_G[...]asks for variable in Global table)
-		local vel = bulletNormVel -- using right velocity
-		local body = love.physics.newBody(world, objects.player.body:getX()+_G["pos1" .. dir], objects.player.body:getY()+_G["pos2" .. dir],'dynamic') -- creating the body at the right position
-		local shape = love.physics.newRectangleShape(4, 4) -- shaping up
-		table.insert(objects.bullets, {body = body, shape = shape, vel = vel, isDone = 0,dir=dir}) -- putting the bullet in the right table
-		for i, bullet in ipairs(objects.bullets) do -- if the bullet isn't done yet, apply the final touches e.g. glueing everithing together and making it a bullet type object
-			if bullet.dir == dir then
-				if bullet.isDone == 0 then
-					bullet.fixture = love.physics.newFixture(bullet.body, bullet.shape, 0)
-					bullet.fixture:setUserData("bullets"..i)
-					bullet.body:setBullet(true)
-					bullet.isDone = 1
-				end
+
+function handleUserInput()
+	objects.player.VelX, objects.player.VelY = objects.player.body:getLinearVelocityFromWorldPoint( 0, 0 ) -- putting player speed into variables
+
+	if love.keyboard.isDown('escape') then -- makes you wanna quit
+		love.event.push('quit')
+	end
+
+	if love.keyboard.isDown('a') then -- player controls
+		if objects.player.VelX > -400 then
+			objects.player.body:applyLinearImpulse(-200,0)
+		end
+
+		if love.keyboard.isDown('lshift') and objects.player.VelX > -800 then -- player controls
+			objects.player.body:applyLinearImpulse(-400,0)
+		end
+	end
+
+  if love.keyboard.isDown('d') then -- player controls
+
+		if objects.player.VelX < 400 then
+			objects.player.body:applyLinearImpulse(200,0)
+		end
+
+		if love.keyboard.isDown('lshift') and objects.player.VelX < 800 then -- player controls
+			objects.player.body:applyLinearImpulse(400,0)
+		end
+	end
+
+  if love.keyboard.isDown(' ')  or love.keyboard.isDown('w') then -- player controls
+
+		if objects.player.VelY < 10 and objects.player.VelY > -10 then
+
+			if sniggleJ == 1 then -- no jumping autofire
+				sniggleJ = -1
+				objects.player.body:applyLinearImpulse(0,-1500)
+				----EXTRA-----
+				square = 40 -- makes the player go big after jumping
+				--------------
 			end
+
 		end
+	else
+		sniggleJ = 1
 	end
-	_G["sniggle" .. dir] = _G["sniggle" .. dir]-1 -- preventing autofire part II
+
+
+	if objects.player.body:getX() > love.graphics.getWidth() then -- don't leave the screen, please!
+		objects.player.body:setX(0)
+	end
+
+	if objects.player.body:getX() < 0 then -- don't leave the screen, please!
+		objects.player.body:setX(love.graphics.getWidth())
+	end
+
+	if objects.player.body:getY() < 0 then -- don't leave the screen, please!
+		objects.player.body:setLinearVelocity(0,100)
+	end
+
+	if love.keyboard.isDown('kp6') then -- I'm firin' mah bullets
+		bulletsHandle.shoot(bullets, "R")
+	else sniggleR = 1
+	end
+
+	if love.keyboard.isDown('kp3') then -- I'm firin' mah bullets
+		bulletsHandle.shoot(bullets, "DR")
+	else sniggleDR = 1
+	end
+
+	if love.keyboard.isDown('kp2') then -- I'm firin' mah bullets
+		bulletsHandle.shoot(bullets, "D")
+	else sniggleD = 1
+	end
+
+	if love.keyboard.isDown('kp1') then -- I'm firin' mah bullets
+		bulletsHandle.shoot(bullets, "DL")
+	else sniggleDL = 1
+	end
+
+	if love.keyboard.isDown('kp4') then -- I'm firin' mah bullets
+		bulletsHandle.shoot(bullets, "L")
+	else sniggleL = 1
+	end
+
+	if love.keyboard.isDown('kp7') then -- I'm firin' mah bullets
+		bulletsHandle.shoot(bullets, "UL")
+	else sniggleUL = 1
+	end
+
+	if love.keyboard.isDown('kp8') then -- I'm firin' mah bullets
+		bulletsHandle.shoot(bullets, "U")
+	else sniggleU = 1
+	end
+
+	if love.keyboard.isDown('kp9') then -- I'm firin' mah bullets
+		bulletsHandle.shoot(bullets, "UR")
+	else sniggleUR = 1
+	end
 end
 
-function use(bullet) --destroying the bullet, if...
-  for i, bullet in ipairs(objects.bullets) do
-			if bullet.isDone == 1 then -- ... its done and not used yet and...
-				bullet.body:setLinearVelocity(bullet.vel*_G["pos1" .. bullet.dir], bullet.vel*_G["pos2" .. bullet.dir]) -- (using the opportunity to make the bullet move)
-				local Velx, Vely = bullet.body:getLinearVelocity( ) -- getting our ocal variables to check
-				if Velx == 0 and _G["pos1" .. bullet.dir] ~= 0 then -- ... the bullet doesn't move in X direction if it's meant to
-					bullet.body:destroy()
-  				bullet.isDone = 2
-					table.remove(objects.bullets,i)
-				elseif Vely == 0 and _G["pos2" .. bullet.dir] ~= 0 then -- ... the bullet doesn't move in Y direction if it's meant to
-					bullet.body:destroy()
-  				bullet.isDone = 2
-					table.remove(objects.bullets,i)
-				elseif bullet.body:getX()-1 < 0 then -- ... if it's too far to the left
-					bullet.body:destroy()
-  				bullet.isDone = 2
-					table.remove(objects.bullets,i)
-				elseif bullet.body:getX()+1 > love.graphics.getWidth() then -- ... if it's too far to the right
-					bullet.body:destroy()
-  				bullet.isDone = 2
-					table.remove(objects.bullets,i)
-				elseif bullet.body:getY()-1 < 0 then -- ... if it's too far to the top
-					bullet.body:destroy()
-  				bullet.isDone = 2
-					table.remove(objects.bullets,i)
-				elseif bullet.body:getY()+floorheight+5 > love.graphics.getHeight() then -- ... if it's too far to the bottom
-					bullet.body:destroy()
-  				bullet.isDone = 2
-					table.remove(objects.bullets,i)
-  		end
-		end
-
-	end
-end
 
 function colldec (type1, dir1, type2, dir2, collA, collB) -- destroying two bodies if they touched
 	if dir1 == "" and dir2 =="" then -- when there is no direction, don't use it
 		for j, one in ipairs(objects[type1]) do -- opening our tables
 			for i, two in ipairs(objects[type2]) do
-				if one.isDone == 1 and two.isDone == 1 then -- only use the bodies if they are done and haven't been used yet				
+				if one.isDone == 1 and two.isDone == 1 then -- only use the bodies if they are done and haven't been used yet
 					if collA == (type1..j) and collB == (type2..i) or collA == (type2..i) and collB == (type1..j) then -- triggers when collision data matches object data
 						one.body:destroy()
 						one.isDone = 2
@@ -172,19 +220,7 @@ function colldec (type1, dir1, type2, dir2, collA, collB) -- destroying two bodi
 	end
 end
 
-function killEnemy(type1,collA)
-	for j, enemy in ipairs(objects[type1]) do  -- drawing some enemies
-			if enemy.isDone == 1  then
-				if collA == (type1..j) then
-					enemy.body:destroy()
-					enemy.isDone = 2
-					table.remove(enemy,j)
-					enemycount = enemycount-1
-					table.remove(storage.collA,k)
-				end
-			end
-		end
-end
+
 
 function love.load(arg) -- loading stuff. Duh.
 	math.randomseed(os.time()) -- makes random stuff more random
@@ -209,24 +245,8 @@ function love.load(arg) -- loading stuff. Duh.
 	objects.player.fixture:setUserData("Playa")
 
 	objects.bullets = {}
-
 	objects.enemy = {}
-	while enemycount < maxEnemies do
-		local velX = math.random(200,400)*(-1)^math.random(1,2) -- spawn enemies at random locations
-		local velY = math.random(200,400)*(-1)^math.random(1,2) -- spawn enemies at random locations
-		local body = love.physics.newBody(world, math.random(0,love.graphics.getWidth()), math.random(0,love.graphics.getHeight()-50),'dynamic') -- give the enemies a body
-		local shape = love.physics.newRectangleShape(10, 10) -- shaping up
-		table.insert(objects.enemy, {body = body, shape = shape, velX = velX, velY = velY, isDone = 0}) -- put 'em into a table
-		enemycount = enemycount+1 -- count the enemies
-		for i, enemy in ipairs(objects.enemy) do -- add finishing touches
-			if enemy.isDone == 0 then
-				enemy.fixture = love.physics.newFixture(enemy.body, enemy.shape, 0)
-				enemy.fixture:setUserData("enemy"..i)
-				enemy.body:setBullet(true)
-				enemy.isDone = 1
-			end
-		end
-	end
+	enemyHandle.SpawnEnemy(enemy)
 	world:setCallbacks(beginContact, endContact, preSolve, postSolve) -- making collisison detection possible
 end
 
@@ -234,115 +254,8 @@ function love.update(dt)
 
 	world:update(dt) -- gets the physics going
 
-	objects.player.VelX, objects.player.VelY = objects.player.body:getLinearVelocityFromWorldPoint( 0, 0 ) -- putting player speed into variables
-
-	if love.keyboard.isDown('escape') then -- makes you wanna quit
-		love.event.push('quit')
-	end
-
-	if love.keyboard.isDown('a') then -- player controls
-		if objects.player.VelX > -400 then
-			objects.player.body:applyLinearImpulse(-200,0)
-		end
-
-		if love.keyboard.isDown('lshift') and objects.player.VelX > -800 then -- player controls
-			objects.player.body:applyLinearImpulse(-400,0)
-		end
-	end
-
-  if love.keyboard.isDown('d') then -- player controls
-
-		if objects.player.VelX < 400 then
-			objects.player.body:applyLinearImpulse(200,0)
-		end
-
-		if love.keyboard.isDown('lshift') and objects.player.VelX < 800 then -- player controls
-			objects.player.body:applyLinearImpulse(400,0)
-		end
-	end
-
-  if love.keyboard.isDown(' ')  or love.keyboard.isDown('w') then -- player controls
-
-		if objects.player.VelY < 10 and objects.player.VelY > -10 then
-
-			if sniggleJ == 1 then -- no jumping autofire
-				sniggleJ = -1
-				objects.player.body:applyLinearImpulse(0,-1500)
-				----EXTRA-----
-				square = 40 -- makes the player go big after jumping
-				--------------
-			end
-
-		end
-	else
-		sniggleJ = 1
-	end
-
-
-	if objects.player.body:getX() > love.graphics.getWidth() then -- don't leave the screen, please!
-		objects.player.body:setX(0)
-	end
-
-	if objects.player.body:getX() < 0 then -- don't leave the screen, please!
-		objects.player.body:setX(love.graphics.getWidth())
-	end
-
-	if objects.player.body:getY() < 0 then -- don't leave the screen, please!
-		objects.player.body:setLinearVelocity(0,100)
-	end
-
-	if love.keyboard.isDown('kp6') then -- I'm firin' mah bullets
-		shoot(bullets, "R")
-	else sniggleR = 1
-	end
-
-	if love.keyboard.isDown('kp3') then -- I'm firin' mah bullets
-		shoot(bullets, "DR")
-	else sniggleDR = 1
-	end
-
-	if love.keyboard.isDown('kp2') then -- I'm firin' mah bullets
-		shoot(bullets, "D")
-	else sniggleD = 1
-	end
-
-	if love.keyboard.isDown('kp1') then -- I'm firin' mah bullets
-		shoot(bullets, "DL")
-	else sniggleDL = 1
-	end
-
-	if love.keyboard.isDown('kp4') then -- I'm firin' mah bullets
-		shoot(bullets, "L")
-	else sniggleL = 1
-	end
-
-	if love.keyboard.isDown('kp7') then -- I'm firin' mah bullets
-		shoot(bullets, "UL")
-	else sniggleUL = 1
-	end
-
-	if love.keyboard.isDown('kp8') then -- I'm firin' mah bullets
-		shoot(bullets, "U")
-	else sniggleU = 1
-	end
-
-	if love.keyboard.isDown('kp9') then -- I'm firin' mah bullets
-		shoot(bullets, "UR")
-	else sniggleUR = 1
-	end
-
-	for i, enemy in ipairs(objects.enemy) do
-		if enemy.isDone == 1 then
-			enemy.body:setLinearVelocity(enemy.velX, enemy.velY) -- get the enemies moving
-			if enemy.body:getX()-5 < 0 and enemy.velX < 0 or enemy.body:getX()+5 > love.graphics.getWidth() and enemy.velX > 0 then -- reverse enemie speed if the move to the outside horizontally
-				enemy.velX = -enemy.velX
-			end
-			if enemy.body:getY()-5 < 0 and enemy.velY < 0 or enemy.body:getY()+5 > love.graphics.getHeight()-floorheight-10 and enemy.velY > 0 then -- reverse enemie speed if the move to the outside vertically
-				enemy.velY = -enemy.velY
-			end
-		end
-	end
-
+	handleUserInput()
+	enemyHandle.UpdateEnemy(enemy)
 	--------------------------------------------------JUMP EFFECT---------------------------------------
 	if square > 20 then -- funky jump rezising
    objects.player.shape = love.physics.newRectangleShape( square, square) --updated square shape
@@ -353,12 +266,13 @@ function love.update(dt)
 	end
 	----------------------------------------------------------------------------------------------------
 	for k, collA in ipairs(storage.collA) do -- calling our collision data
-		killEnemy("enemy",collA)
+		enemyHandle.killEnemy("enemy",collA)
 		if k > 10 then -- only store 10 collision files
 			table.remove(storage.collA,k-10)
 		end
 	end
-	use(bullets) -- use every bullet
+	bulletsHandle.use(bullets) -- use every bullet
+
 end
 
 function love.draw(dt)
@@ -373,7 +287,7 @@ function love.draw(dt)
 		love.graphics.print(collB, k*70, 50)
 	end
 
-	love.graphics.print (test("tree"), 50, 50) -- testing stuff
+	--love.graphics.print (test("tree"), 50, 50) -- testing stuff
 
 	for i, bullet in ipairs(objects.bullets) do -- drawing some bullets
   	if bullet.isDone == 1 then
@@ -381,17 +295,8 @@ function love.draw(dt)
     	love.graphics.print (bullet.fixture:getUserData(),100*i,90)
   	end
 	end
+	enemyHandle.DrawEnemy(enemy)
 
-	love.graphics.setColor(255,0,0,255) -- some red for our enemies
-
-	for i, enemy in ipairs(objects.enemy) do  -- drawing some enemies
-  	if enemy.isDone == 1 then
-  		love.graphics.polygon("fill", enemy.body:getWorldPoints(enemy.shape:getPoints()))
-			love.graphics.print(tostring(enemy.velY),600, 10*i)
-			love.graphics.print(enemy.fixture:getUserData(),500, 10*i)
-  		love.graphics.print(enemy.fixture:getUserData(),enemy.body:getX()+20, enemy.body:getY())
-  	end
-	end
 end
 
 function beginContact(a, b, coll)
