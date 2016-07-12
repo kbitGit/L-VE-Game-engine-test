@@ -1,7 +1,12 @@
 debug = true
 meter = 20 -- scale of the world
+world = love.physics.newWorld(0, 9.81*10*meter, true) --no horizontal grav, 9.81m/s² vertically
 floorheight = 40
 bulletNormVel = 70000 -- how fast a bullet usually is
+objects = {}
+objects.Ground = {}
+
+
 sniggleR = 1 -- every sniggle is used as "locking mechanism", so pressing a button will only trigger once
 sniggleDR = 1
 sniggleD = 1
@@ -220,21 +225,23 @@ function colldec (type1, dir1, type2, dir2, collA, collB) -- destroying two bodi
 	end
 end
 
-
+function LvlObj (b) 
+    objects.Ground[b.var] = {}
+    objects.Ground[b.var].body = b.body
+    objects.Ground[b.var].shape = b.shape
+    objects.Ground[b.var].fixture = love.physics.newFixture(objects.Ground[b.var].body, objects.Ground[b.var].shape)
+    objects.Ground[b.var].fixture:setUserData(b.userdata)
+    end
 
 function love.load(arg) -- loading stuff. Duh.
 	math.randomseed(os.time()) -- makes random stuff more random
 	love.physics.setMeter(meter) --1 Meter = ...
-	world = love.physics.newWorld(0, 9.81*10*meter, true) --no horizontal grav, 9.81m/s² vertically
 	storage = {} -- some tables
 	storage.collA = {}
 	storage.collB = {}
-	objects = {}
-	objects.Ground = {}
-	objects.Ground.body = love.physics.newBody(world, love.graphics.getWidth()/2, love.graphics.getHeight()-floorheight/2) --body, middle of shape will be at coordinate
-	objects.Ground.shape = love.physics.newRectangleShape(love.graphics.getWidth(), floorheight) --floor is ... high and all over the screen
-	objects.Ground.fixture = love.physics.newFixture(objects.Ground.body, objects.Ground.shape) --attach shape to body
-	objects.Ground.fixture:setUserData("Ground")
+    ---
+
+    ---
 	objects.player = {}
 	objects.player.body = love.physics.newBody(world, love.graphics.getWidth()/2, love.graphics.getHeight()/2, "dynamic")
 	objects.player.shape = love.physics.newRectangleShape( meter, meter)
@@ -248,7 +255,11 @@ function love.load(arg) -- loading stuff. Duh.
 	objects.enemy = {}
 	enemyHandle.SpawnEnemy(enemy)
 	world:setCallbacks(beginContact, endContact, preSolve, postSolve) -- making collisison detection possible
+    
+    --dofile("level0")
+    require "level0"
 end
+
 
 function love.update(dt)
 
@@ -277,8 +288,11 @@ end
 
 function love.draw(dt)
 	love.graphics.setColor(255,255,255,255) -- make it all white
-	love.graphics.polygon("fill", objects.Ground.body:getWorldPoints(objects.Ground.shape:getPoints())) -- draw the ground
 	love.graphics.polygon("fill", objects.player.body:getWorldPoints(objects.player.shape:getPoints())) -- draw the player
+    
+    for g, grnd in pairs(objects.Ground) do
+        love.graphics.polygon("fill", grnd.body:getWorldPoints(grnd.shape:getPoints())) -- draw the ground
+    end
 
 	for k, collA in ipairs(storage.collA) do -- printing collision data for testing purposes
 		love.graphics.print(collA, k*70, 50)
