@@ -19,7 +19,7 @@ function M.SpawnEnemy(enemy)
     local velX = math.random(200,400)*(-1)^math.random(1,2) -- spawn enemies at random locations
     local velY = math.random(200,400)*(-1)^math.random(1,2) -- spawn enemies at random locations
     local body = love.physics.newBody(world, math.random(0,love.graphics.getWidth()), math.random(0,love.graphics.getHeight()-50),'dynamic') -- give the enemies a body
-    local shape = love.physics.newRectangleShape(10, 10) -- shaping up
+    local shape = love.physics.newRectangleShape(20, 20) -- shaping up
     table.insert(objects.enemy, {body = body, shape = shape, velX = velX, velY = velY, isDone = 0}) -- put 'em into a table
     enemycount = enemycount+1 -- count the enemies
     for i, enemy in ipairs(objects.enemy) do -- add finishing touches
