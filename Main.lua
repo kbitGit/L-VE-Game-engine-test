@@ -1,11 +1,11 @@
 debug = true
+love.window.setFullscreen(true)
 meter = 20 -- scale of the world
 world = love.physics.newWorld(0, 9.81*10*meter, true) --no horizontal grav, 9.81m/s² vertically
 floorheight = 40
 bulletNormVel = 70000 -- how fast a bullet usually is
 objects = {}
 objects.Ground = {}
-
 
 sniggleR = 1 -- every sniggle is used as "locking mechanism", so pressing a button will only trigger once
 sniggleDR = 1
@@ -103,127 +103,49 @@ function handleUserInput()
 		objects.player.body:setLinearVelocity(0,100)
 	end
 
-	if love.keyboard.isDown('kp6') then -- I'm firin' mah bullets
+	if love.keyboard.isDown('kp6') or love.keyboard.isDown('right') and not love.keyboard.isDown('up') and not love.keyboard.isDown('down') then -- I'm firin' mah bullets
 		bulletsHandle.shoot(bullets, "R")
 	else sniggleR = 1
 	end
 
-	if love.keyboard.isDown('kp3') then -- I'm firin' mah bullets
+	if love.keyboard.isDown('kp3') or love.keyboard.isDown('right') and love.keyboard.isDown('down')then -- I'm firin' mah bullets
 		bulletsHandle.shoot(bullets, "DR")
 	else sniggleDR = 1
 	end
 
-	if love.keyboard.isDown('kp2') then -- I'm firin' mah bullets
+	if love.keyboard.isDown('kp2') or love.keyboard.isDown('down')  and not love.keyboard.isDown('left') and not love.keyboard.isDown('right') then-- I'm firin' mah bullets
 		bulletsHandle.shoot(bullets, "D")
 	else sniggleD = 1
 	end
 
-	if love.keyboard.isDown('kp1') then -- I'm firin' mah bullets
+	if love.keyboard.isDown('kp1') or love.keyboard.isDown('down') and love.keyboard.isDown('left')then -- I'm firin' mah bullets
 		bulletsHandle.shoot(bullets, "DL")
 	else sniggleDL = 1
 	end
 
-	if love.keyboard.isDown('kp4') then -- I'm firin' mah bullets
+	if love.keyboard.isDown('kp4') or love.keyboard.isDown('left') and not love.keyboard.isDown('up') and not love.keyboard.isDown('down')  then -- I'm firin' mah bullets
 		bulletsHandle.shoot(bullets, "L")
 	else sniggleL = 1
 	end
 
-	if love.keyboard.isDown('kp7') then -- I'm firin' mah bullets
+	if love.keyboard.isDown('kp7') or love.keyboard.isDown('up') and love.keyboard.isDown('left')then -- I'm firin' mah bullets
 		bulletsHandle.shoot(bullets, "UL")
 	else sniggleUL = 1
 	end
 
-	if love.keyboard.isDown('kp8') then -- I'm firin' mah bullets
+	if love.keyboard.isDown('kp8') or love.keyboard.isDown('up')   and not love.keyboard.isDown('left') and not love.keyboard.isDown('right') then -- I'm firin' mah bullets
 		bulletsHandle.shoot(bullets, "U")
 	else sniggleU = 1
 	end
 
-	if love.keyboard.isDown('kp9') then -- I'm firin' mah bullets
+	if love.keyboard.isDown('kp9') or love.keyboard.isDown('up') and love.keyboard.isDown('right')then -- I'm firin' mah bullets
 		bulletsHandle.shoot(bullets, "UR")
 	else sniggleUR = 1
 	end
 end
 
 
-function colldec (type1, dir1, type2, dir2, collA, collB) -- destroying two bodies if they touched
-	if dir1 == "" and dir2 =="" then -- when there is no direction, don't use it
-		for j, one in ipairs(objects[type1]) do -- opening our tables
-			for i, two in ipairs(objects[type2]) do
-				if one.isDone == 1 and two.isDone == 1 then -- only use the bodies if they are done and haven't been used yet
-					if collA == (type1..j) and collB == (type2..i) or collA == (type2..i) and collB == (type1..j) then -- triggers when collision data matches object data
-						one.body:destroy()
-						one.isDone = 2
-						table.remove(objects[type1],i)
-						two.body:destroy()
-						two.isDone = 2
-						table.remove(objects[type2],j)
-						enemycount = enemycount-1
-						table.remove(storage.collA,k)
-						table.remove(storage.collB,k2)
-						textvar = textvar+1
-					end
-				end
-			end
-		end
-	elseif dir1~=""	and dir2 == "" then -- when there is no direction, don't use it
-		for j, one in ipairs(objects[type1][dir1]) do -- opening our tables
-  		for i, two in ipairs(objects[type2]) do
-  			if one.isDone == 1 and two.isDone == 1 then -- only use the bodies if they are done and haven't been used yet
-   				if collA == (type1..dir1..i) and collB == (type2..j) or collA == (type2..j) and collB == (type1..dir1..i) then -- triggers when collision data matches object data
-  					one.body:destroy()
-  					one.isDone = 2
-  					table.remove(objects[type1][dir1],i)
-  					two.body:destroy()
-  					two.isDone = 2
-  					table.remove(objects[type2],j)
-  					enemycount = enemycount-1
-  					table.remove(storage.collA,k)
-  					table.remove(storage.collB,k)
-  					textvar = textvar+1
-  				end
-  			end
-  		end
-  	end
-	elseif dir1==""	and dir2 ~= "" then -- when there is no direction, don't use it
-		for j, one in ipairs(objects[type1]) do -- opening our tables
-			for i, two in ipairs(objects[type2][dir2]) do
-				if one.isDone == 1 and two.isDone == 1 then -- only use the bodies if they are done and haven't been used yet
-					if collA == (type1..i) and collB == (type2..dir2..j) or collA == (type2..dir2..j) and collB == (type1..i) then -- triggers when collision data matches object data
-						one.body:destroy()
-						one.isDone = 2
-						table.remove(objects[type1],i)
-						two.body:destroy()
-						two.isDone = 2
-						table.remove(objects[type2][dir2],j)
-						enemycount = enemycount-1
-						table.remove(storage.collA,k)
-						table.remove(storage.collB,k)
-						textvar = textvar+1
-					end
-				end
-			end
-		end
-	else
-		for j, one in ipairs(objects[type1][dir1]) do  -- opening our tables
-			for i, two in ipairs(objects[type2][dir2]) do
-				if one.isDone == 1 and two.isDone == 1 then -- only use the bodies if they are done and haven't been used yet
-					if collA == (type1..dir1..i) and collB == (type2..dir2..j) or collA == (type2..dir2..j) and collB == (type1..dir1..i) then -- triggers when collision data matches object data
-						one.body:destroy()
-						one.isDone = 2
-						table.remove(objects[type1][dir1],i)
-						two.body:destroy()
-						two.isDone = 2
-						table.remove(objects[type2][dir2],j)
-						enemycount = enemycount-1
-						table.remove(storage.collA,k)
-						table.remove(storage.collB,k)
-						textvar = textvar+1
-					end
-				end
-			end
-		end
-	end
-end
+
 
 function LvlObj (b) 
     objects.Ground[b.var] = {}
@@ -314,16 +236,16 @@ function love.draw(dt)
 end
 
 function beginContact(a, b, coll)
-	if string.match(a:getUserData(),"bullet") and  string.match(b:getUserData(),"enemy") or string.match(a:getUserData(),"enemy") and  string.match(b:getUserData(),"bullet") then
 
-		if string.match(a:getUserData(),"enemy") then
-		table.insert(storage.collA, a:getUserData()) --storing our collision data
-		end
-		if string.match(b:getUserData(),"enemy")then
-		table.insert(storage.collA, b:getUserData())
-		end
-
+	
+     if string.match(a:getUserData(),"bullets") then
+        table.insert(storage.collA, b:getUserData()) --storing our collision data
 	end
+	if string.match(b:getUserData(),"bullets")then
+        table.insert(storage.collA, a:getUserData())
+	end
+    
+
  	if a:getUserData() == "Playa" and b:getUserData() == "Ground" or a:getUserData() == "Ground" and b:getUserData() == "Playa" then -- getting to know when the player touches the ground
  		sniggleJ = 1
 	end
