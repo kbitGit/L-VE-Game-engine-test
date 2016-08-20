@@ -6,6 +6,11 @@ floorheight = 40
 bulletNormVel = 70000 -- how fast a bullet usually is
 objects = {}
 objects.Ground = {}
+score = 0
+lvl = 0
+tut = 0
+ti = 0
+deltaT = 0
 
 sniggleR = 1 -- every sniggle is used as "locking mechanism", so pressing a button will only trigger once
 sniggleDR = 1
@@ -34,7 +39,7 @@ pos1UR = meter/2
 pos2UR = -meter/2
 
 enemycount = 0 -- how many enemies are in the world
-maxEnemies = 10 -- how many enemies should be in the world (good for arena modes)
+maxEnemies = 6 -- how many enemies should be in the world (good for arena modes)
 text = "-->" -- random testing variable
 textvar = 0 -- random testing variable
 bananatree = 3 -- random testing variable
@@ -90,6 +95,12 @@ function handleUserInput()
 		sniggleJ = 1
 	end
 
+    if love.keyboard.isDown('t') then
+            maxEnemies = 0
+            objects.player.isDone = -1
+            objects.player.body:setX(love.graphics.getWidth()/4)
+            objects.player.body:setY(love.graphics.getHeight()/4)
+        end
 
 	if objects.player.body:getX() > love.graphics.getWidth() then -- don't leave the screen, please!
 		objects.player.body:setX(0)
@@ -144,9 +155,6 @@ function handleUserInput()
 	end
 end
 
-
-
-
 function LvlObj (b) 
     objects.Ground[b.var] = {}
     objects.Ground[b.var].body = b.body
@@ -165,29 +173,66 @@ function love.load(arg) -- loading stuff. Duh.
 
     ---
 	objects.player = {}
-	objects.player.body = love.physics.newBody(world, love.graphics.getWidth()/2, love.graphics.getHeight()/2, "dynamic")
+	objects.player.body = love.physics.newBody(world, love.graphics.getWidth()/2, love.graphics.getHeight()-floorheight-100, "dynamic")
 	objects.player.shape = love.physics.newRectangleShape( meter, meter)
 	objects.player.fixture = love.physics.newFixture(objects.player.body, objects.player.shape, 1)
 	objects.player.fixture:setRestitution(0)
 	objects.player.speedX = 0
 	objects.player.speedY = 0
 	objects.player.fixture:setUserData("Playa")
+    objects.player.isDone = 0
 
 	objects.bullets = {}
 	objects.enemy = {}
-	enemyHandle.SpawnEnemy(enemy)
 	world:setCallbacks(beginContact, endContact, preSolve, postSolve) -- making collisison detection possible
     
-    --dofile("level0")
+    tut0 = love.graphics.newImage('assets/tut0.png')
+    tut1 = love.graphics.newImage('assets/tut1.png')
+    tut2 = love.graphics.newImage('assets/tut2.png')
+    
     require "level0"
 end
 
 
 function love.update(dt)
 
+    if objects.player.isDone == 0 then
+        if love.keyboard.isDown('kpenter') or love.keyboard.isDown('return') then
+            objects.player.isDone = 1
+        end
+        handleUserInput()
+    end
+
+    if objects.player.isDone == 1 or objects.player.isDone == -1 then
+    
+    if enemycount == 0 then 
+        if tut == 3 and objects.player.isDone == -1 then
+            maxEnemies = 6
+            score = 0
+            objects.player.isDone = 0
+        end
+        
+        if tut == 2 and objects.player.isDone == -1 then
+            maxEnemies = 1
+            tut = 3
+        end
+        maxEnemies = maxEnemies + maxEnemies/3 
+        enemyHandle.SpawnEnemy(enemy)
+    end
+    
 	world:update(dt) -- gets the physics going
 
 	handleUserInput()
+    if tut == 0 and objects.player.isDone == -1 then
+        if love.keyboard.isDown('w') or love.keyboard.isDown('a') or love.keyboard.isDown('d') or love.keyboard.isDown(' ') then
+            tut = 1
+        end
+    end
+    if tut == 1 and objects.player.isDone == -1 then
+        if love.keyboard.isDown('kp1') or love.keyboard.isDown('kp2') or love.keyboard.isDown('kp3') or love.keyboard.isDown('kp4') or love.keyboard.isDown('kp6') or love.keyboard.isDown('kp7') or love.keyboard.isDown('kp8') or love.keyboard.isDown('kp9') or love.keyboard.isDown('up') or love.keyboard.isDown('right') or love.keyboard.isDown('left') then
+            tut = 2
+        end
+    end
 	enemyHandle.UpdateEnemy(enemy)
 	--------------------------------------------------JUMP EFFECT---------------------------------------
 	if square > 20 then -- funky jump rezising
@@ -206,33 +251,77 @@ function love.update(dt)
 	end
 	bulletsHandle.use(bullets) -- use every bullet
 
+    end 
+    
+    if objects.player.isDone == 2 then
+        if love.keyboard.isDown('r') then
+            for i, enemy in ipairs(objects.enemy) do
+                if enemy.isDone == 1 then
+                    enemy.body:destroy()
+                    enemy.isDone = 2
+                    table.remove(enemy,j)
+                    enemycount = enemycount-1
+                    table.remove(storage.collA,k)
+                end
+            end
+            objects.player.body:setX(love.graphics.getWidth()/2)
+            objects.player.body:setY(love.graphics.getHeight()-floorheight-100)
+            maxEnemies = 10
+            score = 0
+            enemyHandle.SpawnEnemy(enemy)
+            objects.player.isDone = 1
+        end
+        handleUserInput()
+    end
+    
+    ti = ti+dt
+    deltaT = math.floor(ti)
 end
 
 function love.draw(dt)
-	love.graphics.setColor(255,255,255,255) -- make it all white
-	love.graphics.polygon("fill", objects.player.body:getWorldPoints(objects.player.shape:getPoints())) -- draw the player
+
+    love.graphics.setColor(255,255,255,255) -- make it all white
     
-    for g, grnd in pairs(objects.Ground) do
-        love.graphics.polygon("fill", grnd.body:getWorldPoints(grnd.shape:getPoints())) -- draw the ground
+    if objects.player.isDone == 0 then
+        love.graphics.print ("Red square reduction",love.graphics.getWidth()/2-450,love.graphics.getHeight()/4,0,7,7)
+        love.graphics.print ("Press Enter to begin.",love.graphics.getWidth()/2-40,love.graphics.getHeight()/2)
+        love.graphics.print ("Press T for tutorial.",love.graphics.getWidth()/2-35,love.graphics.getHeight()/2+20)
+    end 
+    
+    if objects.player.isDone == 1 or objects.player.isDone == -1 then
+        love.graphics.polygon("fill", objects.player.body:getWorldPoints(objects.player.shape:getPoints())) -- draw the player
+        
+        if tut == 0 and objects.player.isDone == -1 then
+            love.graphics.draw(tut0,objects.player.body:getX()-150,objects.player.body:getY()-150)
+        end
+        
+        if tut == 1 and objects.player.isDone == -1 then
+            if deltaT % 2 == 0 then
+            love.graphics.draw(tut1,objects.player.body:getX()-150,objects.player.body:getY()-150)
+            else
+            love.graphics.draw(tut2,objects.player.body:getX()-150,objects.player.body:getY()-150)
+            end
+        end
+        
+        for g, grnd in pairs(objects.Ground) do
+            love.graphics.polygon("fill", grnd.body:getWorldPoints(grnd.shape:getPoints())) -- draw the ground
+        end
+        
+        for i, bullet in ipairs(objects.bullets) do -- drawing some bullets
+        if bullet.isDone == 1 then
+            love.graphics.polygon("fill", bullet.body:getWorldPoints(bullet.shape:getPoints()))
+        end
+        end
+        enemyHandle.DrawEnemy(enemy)
     end
-
-	for k, collA in ipairs(storage.collA) do -- printing collision data for testing purposes
-		love.graphics.print(collA, k*70, 50)
-	end
-	for k, collB in ipairs(storage.collA) do
-		love.graphics.print(collB, k*70, 50)
-	end
-
-	--love.graphics.print (test("tree"), 50, 50) -- testing stuff
-
-	for i, bullet in ipairs(objects.bullets) do -- drawing some bullets
-  	if bullet.isDone == 1 then
-			love.graphics.polygon("fill", bullet.body:getWorldPoints(bullet.shape:getPoints()))
-    	love.graphics.print (bullet.fixture:getUserData(),100*i,90)
-  	end
-	end
-	enemyHandle.DrawEnemy(enemy)
-
+    
+    if objects.player.isDone == 2 then
+        love.graphics.print ("Game over",love.graphics.getWidth()/2-300,love.graphics.getHeight()/4,0,10,10)
+        love.graphics.print ("Press R to restart.",love.graphics.getWidth()/2-20,love.graphics.getHeight()/2)
+        love.graphics.print ("Score: "..score,love.graphics.getWidth()/2,love.graphics.getHeight()/2+20)
+        love.graphics.print ("Press T for tutorial.",love.graphics.getWidth()/2-25,love.graphics.getHeight()/2+45)
+    end
+    
 end
 
 function beginContact(a, b, coll)
@@ -249,6 +338,11 @@ function beginContact(a, b, coll)
  	if a:getUserData() == "Playa" and b:getUserData() == "Ground" or a:getUserData() == "Ground" and b:getUserData() == "Playa" then -- getting to know when the player touches the ground
  		sniggleJ = 1
 	end
+    
+    if a:getUserData() == "Playa" and string.match(b:getUserData(),"enemy") or string.match(a:getUserData(),"enemy") and b:getUserData() == "Playa" then -- getting to know when the player touches the ground
+ 		objects.player.isDone = 2
+	end
+    
 end
 
 function endContact(a, b, coll)
