@@ -9,8 +9,15 @@ LvlObj{
     
 LvlObj{
 	var = "b",
-    body = love.physics.newBody(world, math.random(100, love.graphics.getWidth()/2-100), math.random(50, love.graphics.getHeight()-2*floorheight)),
-	shape = love.physics.newRectangleShape(200,floorheight),
+    body = love.physics.newBody(world, (love.graphics.getWidth()/2-100)/2, love.graphics.getHeight()-300),
+	shape = love.physics.newRectangleShape(love.graphics.getWidth()/2-100,floorheight),
+	userdata = "Ground"
+    }
+    
+LvlObj{
+	var = "c",
+    body = love.physics.newBody(world, (3*love.graphics.getWidth()/2+100)/2, love.graphics.getHeight()-300),
+	shape = love.physics.newRectangleShape(love.graphics.getWidth()/2-100,floorheight),
 	userdata = "Ground"
     }
     
