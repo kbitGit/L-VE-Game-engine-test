@@ -41,9 +41,9 @@ function M.UpdateEnemy(enemy)
 			if enemy.body:getX()-5 < 0 then -- reverse enemie speed if the move to the outside horizontally
 				enemy.body:setX(love.graphics.getWidth()-5)
 			end
-            if enemy.body:getX()+5 > love.graphics.getWidth() then
-                enemy.body:setX(5)
-            end
+            		if enemy.body:getX()+5 > love.graphics.getWidth() then
+                		enemy.body:setX(5)
+            		end
 			if enemy.body:getY()-5 < 0 and enemy.velY < 0 or enemy.body:getY()+5 > love.graphics.getHeight()-floorheight-10 and enemy.velY > 0 then -- reverse enemie speed if the move to the outside vertically
 				enemy.velY = -enemy.velY
 			end
