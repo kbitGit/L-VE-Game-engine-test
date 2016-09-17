@@ -1,4 +1,3 @@
-debug = true
 love.window.setFullscreen(true)
 meter = 20 -- scale of the world
 world = love.physics.newWorld(0, 9.81*10*meter, true) --no horizontal grav, 9.81m/s² vertically
@@ -12,6 +11,8 @@ tut = 0
 ti = 0
 deltaT = 0
 
+xMagic = 1/1280*love.graphics.getWidth()
+yMagic = 1/1024*love.graphics.getHeight()
 sniggleR = 1 -- every sniggle is used as "locking mechanism", so pressing a button will only trigger once
 sniggleDR = 1
 sniggleD = 1
@@ -49,7 +50,6 @@ square = meter -- player size
 local bulletsHandle = require "Bullet"
 local enemyHandle = require "Enemy"
 
-
 function handleUserInput()
 	objects.player.VelX, objects.player.VelY = objects.player.body:getLinearVelocityFromWorldPoint( 0, 0 ) -- putting player speed into variables
 
@@ -84,7 +84,7 @@ function handleUserInput()
 
 			if sniggleJ == 1 then -- no jumping autofire
 				sniggleJ = -1
-				objects.player.body:applyLinearImpulse(0,-1500)
+				objects.player.body:applyLinearImpulse(0,-1000)
 				----EXTRA-----
 				square = 40 -- makes the player go big after jumping
 				--------------
@@ -190,6 +190,9 @@ function love.load(arg) -- loading stuff. Duh.
     tut1 = love.graphics.newImage('assets/tut1.png')
     tut2 = love.graphics.newImage('assets/tut2.png')
     
+    font = love.graphics.newFont("/Square.ttf", 300 )
+    love.graphics.setFont(font)
+    
     require "level0"
 end
 
@@ -283,9 +286,14 @@ function love.draw(dt)
     love.graphics.setColor(255,255,255,255) -- make it all white
     
     if objects.player.isDone == 0 then
-        love.graphics.print ("Red square reduction",love.graphics.getWidth()/2-450,love.graphics.getHeight()/4,0,7,7)
-        love.graphics.print ("Press Enter to begin.",love.graphics.getWidth()/2-40,love.graphics.getHeight()/2)
-        love.graphics.print ("Press T for tutorial.",love.graphics.getWidth()/2-35,love.graphics.getHeight()/2+20)
+        love.graphics.setColor(255,0,0,255)
+        love.graphics.print ("RED",100*xMagic,love.graphics.getHeight()/10,0,0.6,0.6)
+        love.graphics.setColor(255,255,255,255)
+        love.graphics.print ("SQU",love.graphics.getWidth()/2+170*xMagic,love.graphics.getHeight()/10,0,0.2,0.2)
+        love.graphics.print ("ARE",love.graphics.getWidth()/2+170*xMagic,love.graphics.getHeight()/10+115*yMagic,0,0.2,0.2)
+        love.graphics.print ("REDUCTION",100*xMagic,love.graphics.getHeight()/10+250*yMagic,0,0.271,0.271)
+        love.graphics.print ("PRESS ENTER TO BEGIN.",100*xMagic,6*love.graphics.getHeight()/10,0,0.1,0.1)
+        love.graphics.print ("PRESS T FOR TUTORIAL.",100*xMagic,7*love.graphics.getHeight()/10+20,0,0.1,0.1)
     end 
     
     if objects.player.isDone == 1 or objects.player.isDone == -1 then
@@ -316,10 +324,14 @@ function love.draw(dt)
     end
     
     if objects.player.isDone == 2 then
-        love.graphics.print ("Game over",love.graphics.getWidth()/2-300,love.graphics.getHeight()/4,0,10,10)
-        love.graphics.print ("Press R to restart.",love.graphics.getWidth()/2-20,love.graphics.getHeight()/2)
-        love.graphics.print ("Score: "..score,love.graphics.getWidth()/2,love.graphics.getHeight()/2+20)
-        love.graphics.print ("Press T for tutorial.",love.graphics.getWidth()/2-25,love.graphics.getHeight()/2+45)
+        love.graphics.print ("GA",100*xMagic,love.graphics.getHeight()/10,0,0.2,0.2)
+        love.graphics.print ("ME",100*xMagic,love.graphics.getHeight()/10+95*yMagic,0,0.2,0.2)
+        love.graphics.setColor(255,0,0,255)
+        love.graphics.print ("OVER",love.graphics.getWidth()/4-50*xMagic,love.graphics.getHeight()/10+4*yMagic,0,0.52,0.52)
+        love.graphics.setColor(255,255,255,255)
+        love.graphics.print ("SCORE "..score,100*xMagic,3*love.graphics.getHeight()/10,0,0.1,0.1)
+        love.graphics.print ("PRESS R TO RESTART.",100*xMagic,6*love.graphics.getHeight()/10,0,0.1,0.1)
+        love.graphics.print ("PRESS T FOR TUTORIAL.",100*xMagic,7*love.graphics.getHeight()/10,0,0.1,0.1)
     end
     
 end
