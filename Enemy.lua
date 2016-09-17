@@ -21,7 +21,8 @@ function M.SpawnEnemy(enemy)
     local velY = math.random(200,400)*(-1)^math.random(1,2) -- spawn enemies at random locations
     local body = love.physics.newBody(world, math.random(0,love.graphics.getWidth()), math.random(0,love.graphics.getHeight()-300),'dynamic') -- give the enemies a body
     local shape = love.physics.newRectangleShape(20, 20) -- shaping up
-    table.insert(objects.enemy, {body = body, shape = shape, velX = velX, velY = velY, isDone = 0}) -- put 'em into a table
+    local num = enemycount
+    table.insert(objects.enemy, {body = body, shape = shape, velX = velX, velY = velY, isDone = 0, num = num}) -- put 'em into a table
     enemycount = enemycount+1 -- count the enemies
     for i, enemy in ipairs(objects.enemy) do -- add finishing touches
       if enemy.isDone == 0 then
@@ -41,12 +42,29 @@ function M.UpdateEnemy(enemy)
 			if enemy.body:getX()-5 < 0 then -- reverse enemie speed if the move to the outside horizontally
 				enemy.body:setX(love.graphics.getWidth()-5)
 			end
-            		if enemy.body:getX()+5 > love.graphics.getWidth() then
-                		enemy.body:setX(5)
-            		end
+            if enemy.body:getX()+5 > love.graphics.getWidth() then
+                enemy.body:setX(5)
+            end
 			if enemy.body:getY()-5 < 0 and enemy.velY < 0 or enemy.body:getY()+5 > love.graphics.getHeight()-floorheight-10 and enemy.velY > 0 then -- reverse enemie speed if the move to the outside vertically
 				enemy.velY = -enemy.velY
 			end
+            
+            ---SHITTY PASTE JOB---
+            if math.abs(enemy.velX) <= 400 and math.abs(enemy.velY) <= 400 then   
+                
+                local Xdist = enemy.body:getX() - objects.player.body:getX()
+                
+                enemy.velX = enemy.velX - Xdist/1000
+                
+                local Ydist = enemy.body:getY() - objects.player.body:getY()
+                    
+                enemy.velY = enemy.velY - Ydist/1000
+            
+            else
+                enemy.velX = enemy.velX/2
+                enemy.velY = enemy.velY/2
+            end
+            ---SHITTY PASTE JOB---
 		end
 	end
 end
