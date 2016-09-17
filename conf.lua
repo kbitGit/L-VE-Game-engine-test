@@ -8,3 +8,4 @@ function love.conf(t)
 		 t.window.borderless = true
 		 --t.window.icon = 'assets/logo.png'
 end
+	 
