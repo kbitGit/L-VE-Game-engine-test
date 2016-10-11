@@ -10,6 +10,7 @@ lvl = 0
 tut = 0
 ti = 0
 deltaT = 0
+spawncount = 0
 
 xMagic = 1/1280*love.graphics.getWidth()
 yMagic = 1/1024*love.graphics.getHeight()
@@ -49,6 +50,42 @@ square = meter -- player size
 -----------------
 local bulletsHandle = require "Bullet"
 local enemyHandle = require "Enemy"
+
+function range(from, to, step)
+  step = step or 1
+  return function(_, lastvalue)
+    local nextvalue = lastvalue + step
+    if step > 0 and nextvalue <= to or step < 0 and nextvalue >= to or
+       step == 0
+    then
+      return nextvalue
+    end
+  end, nil, from - step
+end
+
+function makeQuads(Var,path,sizeX,sizeY)
+    Var.img = love.graphics.newImage(path)
+    imageWidth = Var.img:getWidth()
+    imageHeight = Var.img:getHeight()
+    doneX = 0
+    doneY = 0
+    tableXY = {}
+    Var.frames = {}
+    while doneY < imageHeight do
+        if doneX == imageWidth - sizeX then
+            table.insert(tableXY,doneX)
+            table.insert(tableXY,doneY)
+            doneY = doneY + sizeY
+            doneX = 0
+        elseif doneX < imageWidth then
+            table.insert(Var.frames,love.graphics.newQuad(doneX, doneY, sizeX, sizeY, imageWidth, imageHeight))
+            table.insert(tableXY,doneX)
+            table.insert(tableXY,doneY)
+            doneX = doneX + sizeX
+        end
+        table.insert(Var.frames,love.graphics.newQuad(doneX, doneY, sizeX, sizeY, imageWidth, imageHeight))
+    end
+end
 
 function handleUserInput()
 	objects.player.VelX, objects.player.VelY = objects.player.body:getLinearVelocityFromWorldPoint( 0, 0 ) -- putting player speed into variables
@@ -97,6 +134,14 @@ function handleUserInput()
 
     if love.keyboard.isDown('t') then
             maxEnemies = 0
+			for i, enemy in ipairs(objects.enemy) do
+				if enemy.isDone ~=2 then
+					enemy.body:destroy()
+					table.remove(enemy,i)
+					enemycount = enemycount-1
+					enemy.isDone = 2
+				end
+			end
             objects.player.isDone = -1
             objects.player.body:setX(love.graphics.getWidth()/4)
             objects.player.body:setY(love.graphics.getHeight()/4)
@@ -169,14 +214,11 @@ function love.load(arg) -- loading stuff. Duh.
 	storage = {} -- some tables
 	storage.collA = {}
 	storage.collB = {}
-    ---
-
-    ---
 	objects.player = {}
 	objects.player.body = love.physics.newBody(world, love.graphics.getWidth()/2, love.graphics.getHeight()-floorheight-100, "dynamic")
 	objects.player.shape = love.physics.newRectangleShape( meter, meter)
 	objects.player.fixture = love.physics.newFixture(objects.player.body, objects.player.shape, 1)
-	objects.player.fixture:setRestitution(0)
+	objects.player.fixture:setFriction(0.5)
 	objects.player.speedX = 0
 	objects.player.speedY = 0
 	objects.player.fixture:setUserData("Playa")
@@ -196,10 +238,10 @@ function love.load(arg) -- loading stuff. Duh.
     require "level0"
 end
 
-
 function love.update(dt)
 
-    if objects.player.isDone == 0 then
+    if objects.player.isDone == 0 then   
+        
         if love.keyboard.isDown('kpenter') or love.keyboard.isDown('return') then
             objects.player.isDone = 1
         end
@@ -209,18 +251,26 @@ function love.update(dt)
     if objects.player.isDone == 1 or objects.player.isDone == -1 then
     
     if enemycount == 0 then 
-        if tut == 3 and objects.player.isDone == -1 then
+        if tut == 3 and objects.player.isDone == -1 and spawncount == nil then
             maxEnemies = 6
             score = 0
-            objects.player.isDone = 0
+            objects.player.isDone = 1
+			tut = 0
         end
         
         if tut == 2 and objects.player.isDone == -1 then
             maxEnemies = 1
             tut = 3
         end
-        maxEnemies = maxEnemies + maxEnemies/3 
-        enemyHandle.SpawnEnemy(enemy)
+        if spawncount == nil then
+			maxEnemies = maxEnemies + maxEnemies/3 
+			spawncount = 0
+		end
+		spawncount = spawncount + 2*dt
+		if spawncount >= 10 then
+			enemyHandle.SpawnEnemy(enemy)
+			spawncount = nil
+		end
     end
     
 	world:update(dt) -- gets the physics going
@@ -286,6 +336,7 @@ function love.draw(dt)
     love.graphics.setColor(255,255,255,255) -- make it all white
     
     if objects.player.isDone == 0 then
+        
         love.graphics.setColor(255,0,0,255)
         love.graphics.print ("RED",100*xMagic,love.graphics.getHeight()/10,0,0.6,0.6)
         love.graphics.setColor(255,255,255,255)
@@ -294,6 +345,7 @@ function love.draw(dt)
         love.graphics.print ("REDUCTION",100*xMagic,love.graphics.getHeight()/10+250*yMagic,0,0.271,0.271)
         love.graphics.print ("PRESS ENTER TO BEGIN.",100*xMagic,6*love.graphics.getHeight()/10,0,0.1,0.1)
         love.graphics.print ("PRESS T FOR TUTORIAL.",100*xMagic,7*love.graphics.getHeight()/10+20,0,0.1,0.1)
+        
     end 
     
     if objects.player.isDone == 1 or objects.player.isDone == -1 then
@@ -320,7 +372,8 @@ function love.draw(dt)
             love.graphics.polygon("fill", bullet.body:getWorldPoints(bullet.shape:getPoints()))
         end
         end
-        enemyHandle.DrawEnemy(enemy)
+				
+        enemyHandle.DrawEnemy(dt,enemy)
     end
     
     if objects.player.isDone == 2 then
