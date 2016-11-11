@@ -50,6 +50,7 @@ square = meter -- player size
 -----------------
 local bulletsHandle = require "Bullet"
 local enemyHandle = require "Enemy"
+local powerUpHandle = require "PowerUp"
 
 function range(from, to, step)
   step = step or 1
@@ -69,22 +70,38 @@ function makeQuads(Var,path,sizeX,sizeY)
     imageHeight = Var.img:getHeight()
     doneX = 0
     doneY = 0
-    tableXY = {}
     Var.frames = {}
     while doneY < imageHeight do
         if doneX == imageWidth - sizeX then
-            table.insert(tableXY,doneX)
-            table.insert(tableXY,doneY)
             doneY = doneY + sizeY
             doneX = 0
         elseif doneX < imageWidth then
             table.insert(Var.frames,love.graphics.newQuad(doneX, doneY, sizeX, sizeY, imageWidth, imageHeight))
-            table.insert(tableXY,doneX)
-            table.insert(tableXY,doneY)
             doneX = doneX + sizeX
         end
         table.insert(Var.frames,love.graphics.newQuad(doneX, doneY, sizeX, sizeY, imageWidth, imageHeight))
     end
+end
+
+function playAnim(Var,name,length,loopmode,speed,herbertOut,x,y)
+	Var.body = Var.body or nil
+	length = length or 1
+	dt = love.timer.getDelta( )
+	if Var[name].frame >= length and not loopmode then
+		Var.herbert = herbertOut
+	elseif Var.body ~= nil then
+		love.graphics.draw(Var[name].img, Var[name].frames[math.floor(Var[name].frame)], Var.body:getX()+x or Var.x+x, Var.body:getY()+y or Var.y+y)
+		Var[name].frame = Var[name].frame +dt*speed
+		if Var[name].frame >= length and loopmode then
+			Var[name].frame = 1
+		end
+	else
+		love.graphics.draw(Var[name].img, Var[name].frames[math.floor(Var[name].frame)], Var.x+x, Var.y+y)
+		Var[name].frame = Var[name].frame +dt*speed
+		if Var[name].frame >= length and loopmode then
+			Var[name].frame = 1
+		end
+	end
 end
 
 function handleUserInput()
@@ -115,21 +132,14 @@ function handleUserInput()
 		end
 	end
 
-  if love.keyboard.isDown(' ')  or love.keyboard.isDown('w') then -- player controls
-
-		if objects.player.VelY < 10 and objects.player.VelY > -10 then
-
-			if sniggleJ == 1 then -- no jumping autofire
-				sniggleJ = -1
-				objects.player.body:applyLinearImpulse(0,-1000)
-				----EXTRA-----
-				square = 40 -- makes the player go big after jumping
-				--------------
-			end
-
+  if love.keyboard.isDown(' ') or love.keyboard.isDown('space')  or love.keyboard.isDown('w') then -- player controls
+		if sniggleJ > 0 then -- no jumping autofire
+			sniggleJ = sniggleJ - 1
+			objects.player.body:applyLinearImpulse(0,-1000)
+			----EXTRA-----
+			square = 40 -- makes the player go big after jumping
+			--------------
 		end
-	else
-		sniggleJ = 1
 	end
 
     if love.keyboard.isDown('t') then
@@ -150,7 +160,7 @@ function handleUserInput()
 	if objects.player.body:getX() > love.graphics.getWidth() then -- don't leave the screen, please!
 		objects.player.body:setX(0)
 	end
-
+	
 	if objects.player.body:getX() < 0 then -- don't leave the screen, please!
 		objects.player.body:setX(love.graphics.getWidth())
 	end
@@ -226,6 +236,7 @@ function love.load(arg) -- loading stuff. Duh.
 
 	objects.bullets = {}
 	objects.enemy = {}
+	objects.powerUp = {}
 	world:setCallbacks(beginContact, endContact, preSolve, postSolve) -- making collisison detection possible
     
     tut0 = love.graphics.newImage('assets/tut0.png')
@@ -267,6 +278,9 @@ function love.update(dt)
 			spawncount = 0
 		end
 		spawncount = spawncount + 2*dt
+		if love.keyboard.isDown('kpenter') or love.keyboard.isDown('return') then
+			spawncount = 10
+		end
 		if spawncount >= 10 then
 			enemyHandle.SpawnEnemy(enemy)
 			spawncount = nil
@@ -274,6 +288,9 @@ function love.update(dt)
     end
     
 	world:update(dt) -- gets the physics going
+	
+	powerUpHandle.UsePowerUp(collA)
+	powerUpHandle.SpawnPowerUp(powerUp)
 
 	handleUserInput()
     if tut == 0 and objects.player.isDone == -1 then
@@ -297,7 +314,7 @@ function love.update(dt)
 	end
 	----------------------------------------------------------------------------------------------------
 	for k, collA in ipairs(storage.collA) do -- calling our collision data
-		enemyHandle.killEnemy("enemy",collA)
+		enemyHandle.killEnemy(collA)
 		if k > 10 then -- only store 10 collision files
 			table.remove(storage.collA,k-10)
 		end
@@ -312,11 +329,15 @@ function love.update(dt)
                 if enemy.isDone == 1 then
                     enemy.body:destroy()
                     enemy.isDone = 2
-                    table.remove(enemy,j)
+                    table.remove(objects.enemy,j)
                     enemycount = enemycount-1
                     table.remove(storage.collA,k)
                 end
             end
+			for i, powerUp in ipairs(objects.powerUp) do
+				table.remove(objects.powerUp,i)
+			end
+			powerUpVar = false
             objects.player.body:setX(love.graphics.getWidth()/2)
             objects.player.body:setY(love.graphics.getHeight()-floorheight-100)
             maxEnemies = 10
@@ -349,7 +370,10 @@ function love.draw(dt)
     end 
     
     if objects.player.isDone == 1 or objects.player.isDone == -1 then
-        love.graphics.polygon("fill", objects.player.body:getWorldPoints(objects.player.shape:getPoints())) -- draw the player
+        powerUpHandle.DrawPowerUp(dt)
+		enemyHandle.DrawEnemy(dt,enemy)
+		love.graphics.setColor(255,255,255,255)
+		love.graphics.polygon("fill", objects.player.body:getWorldPoints(objects.player.shape:getPoints())) -- draw the player
         
         if tut == 0 and objects.player.isDone == -1 then
             love.graphics.draw(tut0,objects.player.body:getX()-150,objects.player.body:getY()-150)
@@ -372,8 +396,6 @@ function love.draw(dt)
             love.graphics.polygon("fill", bullet.body:getWorldPoints(bullet.shape:getPoints()))
         end
         end
-				
-        enemyHandle.DrawEnemy(dt,enemy)
     end
     
     if objects.player.isDone == 2 then
@@ -392,10 +414,10 @@ end
 function beginContact(a, b, coll)
 
 	
-     if string.match(a:getUserData(),"bullets") then
+    if string.match(a:getUserData(),"bullets") or string.match(a:getUserData(),"Playa") then
         table.insert(storage.collA, b:getUserData()) --storing our collision data
 	end
-	if string.match(b:getUserData(),"bullets")then
+	if string.match(b:getUserData(),"bullets") or string.match(b:getUserData(),"Playa")then
         table.insert(storage.collA, a:getUserData())
 	end
     
