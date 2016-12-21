@@ -1,6 +1,7 @@
 function love.conf(t)
+         t.identity = "Game.love"
          t.title = "KEK"
-		 t.version = "0.9.2"
+		 t.version = "0.10.0"
 		 t.window.width = 0
 		 t.window.height = 0
 		 t.console = true
